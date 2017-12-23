@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Office.Interop.Excel;
+using SCPDRecorder.Services;
 
 namespace SCPDRecorder
 {
@@ -13,44 +13,30 @@ namespace SCPDRecorder
 
         static void Main(string[] args)
         {
-            Console.WriteLine("===================");
-            Console.WriteLine("s-CPD Recorder v1.0");
-            Console.WriteLine("===================");
-            Console.WriteLine();
-            Console.WriteLine("Enter 'Q' to stop recording");
-            Console.WriteLine();
             RecordNumber();
-            ExportExcel();
+            ExcelExport();
             Console.WriteLine("Press any key to quit...");
             Console.ReadKey();
         }
 
-        /// <summary>
-        /// This function exports the list to an excel file
-        /// </summary>
-        static void ExportExcel()
+        static void Menu()
         {
-            Console.WriteLine("Exporting data to excel...");
-
-            var excel = new Microsoft.Office.Interop.Excel.Application();
-            excel.Visible = true;
-            var workbook = excel.Workbooks.Add(Type.Missing);
-            var sheet = (Microsoft.Office.Interop.Excel.Worksheet)workbook.ActiveSheet;
-            sheet.Name = "s-CPD Record";
-            sheet.Cells[1, 1] = "s-CPD Record List";
-
-            sheet.Range[sheet.Cells[1, 1], sheet.Cells[1, 2]].Merge();
-
-            sheet.Cells[1, 1].Font.Bold = true;
-
-            int startIndex = 2;
-            foreach (string libraryNumber in libraryNumberList)
+            var exitStatus = false;
+            while (!exitStatus)
             {
-                sheet.Cells[startIndex, 1] = libraryNumber;
-                startIndex++;
+                Console.WriteLine(@"Please select a function : 
+1. Record Number
+2. Export to Excel");
+                Console.Write("Your option : ");
+                var userInput = Console.ReadLine();
+                exitStatus = true;
             }
+        }
 
-            sheet.Columns.AutoFit();
+        static void ExcelExport()
+        {
+            ExcelExportService excelExport = new ExcelExportService();
+            excelExport.StringListToExcel(libraryNumberList);
         }
 
         /// <summary>
@@ -61,22 +47,25 @@ namespace SCPDRecorder
             bool exitStatus = false;
             while (!exitStatus)
             {
+                InputValidator inputValidator = new InputValidator();
                 Console.Write("Please enter library number : ");
                 string libraryNumber = Console.ReadLine();
-                if (!libraryNumber.Contains('q') && !libraryNumber.Contains('Q'))
+                if (libraryNumber == "Q" || libraryNumber == "q")
                 {
-                    if (string.IsNullOrEmpty(libraryNumber) || !libraryNumber.Any(char.IsDigit))
+                    if (inputValidator.LibraryNumberValidator(libraryNumber))
                     {
-                        Console.WriteLine("Invalid data entered, please try again");
-                    }
-                    else if (!libraryNumberList.Contains(libraryNumber))
-                    {
-                        libraryNumberList.Add(libraryNumber);
-                        Console.WriteLine("Library number registered");
+                        if (!libraryNumberList.Contains(libraryNumber))
+                        {
+                            libraryNumberList.Add(libraryNumber);
+                        }
+                        else
+                        {
+                            Console.WriteLine("User already registered");
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("Duplicate library number found. Current register ignored");
+                        Console.WriteLine("Invalid input. Please try again.");
                     }
                 }
                 else
